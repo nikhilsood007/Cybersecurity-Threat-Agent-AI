@@ -130,4 +130,26 @@ CyberGuard AI Analyst is a web-based tool that leverages Google Gemini AI to ana
 
 ---
 
-**This documentation is up to date as of May 27, 2025.**
+## 13. Deployment to Render.com (Free Hosting)
+
+- The project can be deployed for free using [Render.com](https://render.com/).
+- Steps followed:
+  1. Pushed the latest code and documentation to GitHub.
+  2. Created a new Web Service on Render.com, connected to the GitHub repo.
+  3. Set the **Build Command** to:
+     ```
+     pip install -r requirements.txt
+     ```
+  4. Set the **Start Command** to:
+     ```
+     python app.py
+     ```
+  5. Added environment variables (`GEMINI_API_KEY`, `FLASK_SECRET_KEY`) in the Render dashboard (copied from `.env`).
+  6. Deployed and tested the app at the public Render URL.
+- Troubleshooting:
+  - If you see a build error about `pip install -r [requirements.txt](...)`, remove any brackets or Markdown formatting and use the plain filename as above.
+- The app works on Render’s free tier, with auto-sleep and public access for demos.
+
+---
+
+**This documentation is up to date as of May 27, 2025, including deployment and troubleshooting steps for Render.com.**
