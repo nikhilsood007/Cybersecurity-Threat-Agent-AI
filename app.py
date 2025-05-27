@@ -17,9 +17,8 @@ from cyber_agent_core import analyze_threat_intelligence
 
 app = Flask(__name__)
 
-# !!! IMPORTANT: Flask requires a secret key for sessions, even if we don't use them directly in this app
-# Generate one using: import os; print(os.urandom(24).hex())
-app.secret_key = 'your_super_secret_key_for_flask_app_replace_me' 
+# Load Flask secret key from .env for security
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'fallback_secret_key')
 
 # Disable reloader during development to prevent WinError 32 PermissionError
 # (Especially if your cyber_agent_core.py does file operations like ChromaDB in __init__)
@@ -34,7 +33,7 @@ def index():
     return render_template('index.html')
 
 def extract_severity_from_report(report):
-    """Extracts the severity level from the AI report text."""
+    """Extracts the severity level from the AI report text (High, Medium, etc)."""
     import re
     match = re.search(r"Severity Assessment:\s*(?:`)?(Informational|Low|Medium|High|Critical)(?:`)?", report, re.IGNORECASE)
     if match:
@@ -50,6 +49,10 @@ def analyze_threat():
     """Receives threat text, calls AI agent, and returns analysis report and mitigation."""
     data = request.get_json()
     input_text = data.get('text', '').strip()
+
+    # Limit input length for safety
+    if len(input_text) > 5000:
+        return jsonify({'success': False, 'message': 'Input too long. Please limit to 5000 characters.'}), 400
 
     if not input_text:
         return jsonify({'success': False, 'message': 'No input text provided for analysis.'}), 400
@@ -82,11 +85,21 @@ def analyze_threat():
         return jsonify({'success': True, 'report': report, 'mitigation': mitigation, 'severity': severity})
     except Exception as e:
         print(f"ERROR: Analysis failed in Flask route: {e}")
+        # User-friendly error for Gemini API issues
+        if 'gemini' in str(e).lower() or 'api' in str(e).lower():
+            return jsonify({'success': False, 'message': 'AI service unavailable. Please try again later.'}), 503
         return jsonify({'success': False, 'message': f'Analysis failed due to an internal error: {e}'}), 500
 
 @app.route('/history')
 def history():
     return jsonify({'success': True, 'history': analysis_history})
+
+@app.route('/clear_history', methods=['POST'])
+def clear_history():
+    """Clears the analysis history."""
+    global analysis_history
+    analysis_history = []
+    return jsonify({'success': True})
 
 @app.route('/chatbot', methods=['POST'])
 def chatbot():

@@ -104,6 +104,7 @@ def analyze_threat_intelligence(input_text: str) -> str:
     - If you see a filename with a double extension (e.g., .pdf.exe, .docx.exe, .jpg.exe, .txt.exe, etc.), or a file that looks like a document but ends with .exe, .scr, .bat, .cmd, .js, or other executable extensions, you MUST treat it as a HIGH or CRITICAL threat. This is a classic malware and social engineering tactic. Clearly state this in your summary and severity.
     - If the input text contains phrases like "password reset", "account compromised", "urgent action required", or similar, and includes a suspicious link (especially an external URL), you MUST treat this as a HIGH or CRITICAL threat. This is a classic phishing tactic. Clearly state this in your summary and severity, even if the link does not look obviously malicious.
     - Any email or message that urges the user to click a link to reset a password, verify an account, or respond urgently, especially if it contains a link or asks for credentials, should be considered a likely phishing attempt and assigned HIGH or CRITICAL severity.
+    - However, a standard password change confirmation (e.g., "Your password was changed successfully. If you did not request this change, please contact support.") with NO suspicious links or urgent action requests should be considered safe and assigned LOW or INFORMATIONAL severity.
 
     **Input Text (e.g., suspicious email, log snippet, URL to analyze):**
     ```
