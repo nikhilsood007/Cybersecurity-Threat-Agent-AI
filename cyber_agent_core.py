@@ -100,6 +100,11 @@ def analyze_threat_intelligence(input_text: str) -> str:
     prompt = f"""
     You are a highly skilled and diligent Cybersecurity Threat Intelligence Analyst AI. Your primary mission is to identify, assess, and report on potential cyber threats. Your analysis must be comprehensive, actionable, and based solely on the provided information.
 
+    **IMPORTANT:**
+    - If you see a filename with a double extension (e.g., .pdf.exe, .docx.exe, .jpg.exe, .txt.exe, etc.), or a file that looks like a document but ends with .exe, .scr, .bat, .cmd, .js, or other executable extensions, you MUST treat it as a HIGH or CRITICAL threat. This is a classic malware and social engineering tactic. Clearly state this in your summary and severity.
+    - If the input text contains phrases like "password reset", "account compromised", "urgent action required", or similar, and includes a suspicious link (especially an external URL), you MUST treat this as a HIGH or CRITICAL threat. This is a classic phishing tactic. Clearly state this in your summary and severity, even if the link does not look obviously malicious.
+    - Any email or message that urges the user to click a link to reset a password, verify an account, or respond urgently, especially if it contains a link or asks for credentials, should be considered a likely phishing attempt and assigned HIGH or CRITICAL severity.
+
     **Input Text (e.g., suspicious email, log snippet, URL to analyze):**
     ```
     {input_text}
@@ -116,7 +121,7 @@ def analyze_threat_intelligence(input_text: str) -> str:
     2.  **Identified IoCs & Findings:**
         * List all relevant IoCs (URLs, IPs, Emails) explicitly identified in the Input Text or Tool Outputs.
         * For each IoC, summarize its nature (e.g., "Mismatched URL," "Known malicious IP," "Suspicious sender email").
-        * Mention any other key findings from the Input Text (e.g., social engineering tactics, unusual phrasing, unusual login patterns).
+        * Mention any other key findings from the Input Text (e.g., social engineering tactics, unusual phrasing, unusual login patterns, or suspicious filenames/extensions).
     3.  **Severity Assessment:** Assign an overall severity (e.g., `Informational`, `Low`, `Medium`, `High`, `Critical`) for this specific threat. Justify your reasoning, referencing both the input text and tool outputs.
     4.  **Recommended Immediate Actions:** Provide concrete, prioritized steps for a user or IT security team to respond to this threat. Be specific and actionable.
     5.  **Disclaimer:** Always include a disclaimer stating this is an AI-generated initial analysis and full human security assessment is required.
@@ -128,18 +133,6 @@ def analyze_threat_intelligence(input_text: str) -> str:
         return response.text
     except Exception as e:
         return f"Error analyzing threat intelligence: {e}. Please check API key and input."
-
-def call_gemini_api(prompt):
-    url = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
-    headers = {"Content-Type": "application/json"}
-    params = {"key": GEMINI_API_KEY}
-    data = {
-        "contents": [{"parts": [{"text": prompt}]}]
-    }
-    response = requests.post(url, headers=headers, params=params, json=data, timeout=20)
-    response.raise_for_status()
-    result = response.json()
-    return result["candidates"][0]["content"]["parts"][0]["text"]
 
 # --- Test the Function (for direct execution during development) ---
 if __name__ == "__main__":

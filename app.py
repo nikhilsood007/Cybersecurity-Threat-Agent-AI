@@ -13,7 +13,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '')))
 
 # Import your core analysis function from cyber_agent_core.py
 # This will also initialize the LLM (gemini-1.5-flash) when app.py starts
-from cyber_agent_core import analyze_threat_intelligence, call_gemini_api
+from cyber_agent_core import analyze_threat_intelligence
 
 app = Flask(__name__)
 
@@ -33,6 +33,18 @@ def index():
     """Renders the main page for threat analysis input."""
     return render_template('index.html')
 
+def extract_severity_from_report(report):
+    """Extracts the severity level from the AI report text."""
+    import re
+    match = re.search(r"Severity Assessment:\s*(?:`)?(Informational|Low|Medium|High|Critical)(?:`)?", report, re.IGNORECASE)
+    if match:
+        return match.group(1).capitalize()
+    # Fallback: try to find severity in the text
+    for sev in ["Critical", "High", "Medium", "Low", "Informational"]:
+        if sev.lower() in report.lower():
+            return sev
+    return "Unknown"
+
 @app.route('/analyze_threat', methods=['POST'])
 def analyze_threat():
     """Receives threat text, calls AI agent, and returns analysis report and mitigation."""
@@ -47,6 +59,7 @@ def analyze_threat():
 
     try:
         report = analyze_threat_intelligence(input_text)
+        severity = extract_severity_from_report(report)
         # Simple mitigation suggestion logic (replace with your own or use LLM)
         mitigation = []
         if "phishing" in report.lower():
@@ -61,11 +74,12 @@ def analyze_threat():
         analysis_history.append({
             'input': input_text,
             'report': report,
-            'mitigation': mitigation
+            'mitigation': mitigation,
+            'severity': severity
         })
 
         print("\n--- Web App: Analysis complete. Returning report and mitigation. ---")
-        return jsonify({'success': True, 'report': report, 'mitigation': mitigation})
+        return jsonify({'success': True, 'report': report, 'mitigation': mitigation, 'severity': severity})
     except Exception as e:
         print(f"ERROR: Analysis failed in Flask route: {e}")
         return jsonify({'success': False, 'message': f'Analysis failed due to an internal error: {e}'}), 500
@@ -109,20 +123,6 @@ def chatbot():
         return jsonify({'success': True, 'response': answer})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
-
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-def call_gemini_api(prompt):
-    url = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent"
-    headers = {"Content-Type": "application/json"}
-    params = {"key": GEMINI_API_KEY}
-    data = {
-        "contents": [{"parts": [{"text": prompt}]}]
-    }
-    response = requests.post(url, headers=headers, params=params, json=data, timeout=20)
-    response.raise_for_status()
-    result = response.json()
-    return result["candidates"][0]["content"]["parts"][0]["text"]
 
 if __name__ == '__main__':
     # !!! IMPORTANT: Change the host and port as needed, or use 0.0.0.0:5000 to listen on all interfaces

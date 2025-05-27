@@ -173,7 +173,7 @@
                 const data = await response.json();
                 if (data.success) {
                     document.getElementById('analysisReportContent').textContent = data.report;
-                    showReportAlert(data.report);
+                    showReportAlert(data.severity, data.threat_score, data.report);
                     // Show mitigation
                     if (data.mitigation && data.mitigation.length > 0) {
                         document.getElementById('mitigationList').innerHTML = data.mitigation.map(m => `<li>${m}</li>`).join('');
@@ -201,42 +201,23 @@
             }
         }
 
-        function showReportAlert(reportText) {
+        function showReportAlert(severity, threatScore, reportText) {
             const alertDiv = document.getElementById('report-alert');
-            let isIssue = false;
-            let isNoIssue = false;
-            const lower = reportText.toLowerCase();
-            if (
-                lower.includes('no issue') ||
-                lower.includes('no threat') ||
-                lower.includes('benign') ||
-                lower.includes('safe') ||
-                lower.includes('not malicious')
-            ) {
-                isNoIssue = true;
-            } else if (
-                lower.includes('issue') ||
-                lower.includes('malicious') ||
-                lower.includes('phishing') ||
-                lower.includes('threat') ||
-                lower.includes('attack') ||
-                lower.includes('danger') ||
-                lower.includes('critical') ||
-                lower.includes('high')
-            ) {
-                isIssue = true;
-            }
-            if (isNoIssue) {
-                alertDiv.innerHTML = `<div class="mb-4 px-4 py-3 rounded-lg bg-green-100 border border-green-400 text-green-800 font-semibold text-center shadow">
-                    ✅ No threat detected. This input appears safe.
-                </div>`;
-            } else if (isIssue) {
-                alertDiv.innerHTML = `<div class="mb-4 px-4 py-3 rounded-lg bg-red-100 border border-red-400 text-red-800 font-semibold text-center shadow">
-                    ⚠️ Threat or issue detected! Please review the analysis below.
-                </div>`;
+            let html = "";
+            if (severity && (severity.toLowerCase() === "high" || severity.toLowerCase() === "critical" || (threatScore && threatScore >= 60))) {
+                html = `<div class="mb-4 px-4 py-3 rounded-lg bg-red-100 border border-red-400 text-red-800 font-semibold text-center shadow">
+            ⚠️ Threat or issue detected! Please review the analysis below.
+        </div>`;
+            } else if (severity && (severity.toLowerCase() === "medium" || (threatScore && threatScore >= 40))) {
+                html = `<div class="mb-4 px-4 py-3 rounded-lg bg-yellow-100 border border-yellow-400 text-yellow-800 font-semibold text-center shadow">
+            ⚠️ Potential issue detected. Please review the analysis below.
+        </div>`;
             } else {
-                alertDiv.innerHTML = "";
+                html = `<div class="mb-4 px-4 py-3 rounded-lg bg-green-100 border border-green-400 text-green-800 font-semibold text-center shadow">
+            ✅ No significant threat detected. This input appears safe.
+        </div>`;
             }
+            alertDiv.innerHTML = html;
         }
 
         function resetApp() {
