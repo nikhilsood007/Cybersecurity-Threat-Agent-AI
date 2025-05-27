@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGuard AI Analyst</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(120deg, #f8fafc 0%, #e0e7ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass {
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.24);
+        }
+        .fade-in {
+            animation: fadeInUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) both;
+        }
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translate3d(0, 30px, 0);}
+            100% { opacity: 1; transform: translate3d(0, 0, 0);}
+        }
+        .input-box:focus-within {
+            box-shadow: 0 0 0 4px #6366f1, 0 8px 32px 0 rgba(99,102,241,0.10);
+            border-color: #6366f1;
+        }
+        .textarea {
+            font-size: 1.15rem;
+            min-width: 400px;
+            max-width: 900px;
+            min-height: 160px;
+            max-height: 400px;
+        }
+        @media (max-width: 900px) {
+            .textarea { min-width: 90vw; max-width: 98vw;}
+            .container { max-width: 98vw;}
+        }
+    </style>
+</head>
+<body>
+    <div class="container glass fade-in p-10 max-w-3xl w-full flex flex-col items-center">
+        <!-- Header -->
+        <div class="w-full flex flex-row items-center justify-between mb-8">
+            <div class="flex items-center gap-3">
+                <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" alt="CyberGuard Logo" class="w-12 h-12 rounded-full shadow-lg border-2 border-indigo-200 bg-white">
+                <span class="text-4xl font-extrabold text-indigo-700 tracking-tight drop-shadow">CyberGuard</span>
+            </div>
+            <span class="text-base text-indigo-500 font-semibold tracking-wide hidden sm:block">AI Threat Analyst</span>
+        </div>
+        <!-- Tagline -->
+        <p class="text-gray-600 mb-8 text-center text-lg font-medium">
+            <span class="text-indigo-600 font-semibold">Paste suspicious text for instant AI-powered threat analysis.</span>
+        </p>
+
+        <!-- Input Section -->
+        <div id="input-section" class="input-box bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-2xl p-8 mb-10 w-full shadow-lg flex flex-col items-center transition-all duration-300">
+            <label for="threatInput" class="block text-gray-700 text-lg font-semibold mb-3 text-center w-full">
+                Input Threat Text
+            </label>
+            <!-- Place this just above your <textarea> in the input section -->
+<div class="mb-4 w-full">
+    <label class="block text-gray-700 font-semibold mb-1">Try a sample threat:</label>
+    <select id="sampleThreats" class="w-full p-2 rounded border border-indigo-200" onchange="insertSampleThreat()">
+        <option value="">-- Select a sample --</option>
+        <option value="Subject: Urgent Password Reset\n\nDear user, your account has been compromised. Click here to reset your password: http://malicious-link.com/">Phishing Email</option>
+        <option value="Failed login attempts from IP 192.168.1.100 for user 'admin' repeatedly.">Brute Force Log</option>
+        <option value="Suspicious attachment detected: invoice.pdf.exe">Malware Attachment</option>
+        <option value="Subject: Important Update\n\nPlease review the attached document for important information.">Generic Suspicious Email</option>
+    </select>
+    <div class="mt-2 text-xs text-gray-500">
+        More examples: 
+        <a href="https://www.phishing.org/phishing-examples" target="_blank" class="text-indigo-500 hover:underline">Phishing.org</a> | 
+        <a href="https://cofense.com/solutions/phishing-examples/" target="_blank" class="text-indigo-500 hover:underline">Cofense</a>
+    </div>
+</div>
+<textarea
+                id="threatInput"
+                rows="8"
+                class="textarea w-full p-5 border border-indigo-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-200 ease-in-out bg-white/80 mb-4"
+                placeholder="E.g., 'Subject: Urgent Password Reset! Click here: http://malicious-link.com/...' or 'Failed login attempts from IP 1.2.3.4 for user 'admin' repeatedly.'"
+            ></textarea>
+            <button onclick="analyzeThreat()" class="button bg-gradient-to-r from-indigo-600 to-indigo-500 text-white px-10 py-4 rounded-full shadow-xl hover:from-indigo-700 hover:to-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-50 transition duration-200 ease-in-out w-2/3 mt-2 text-xl font-semibold tracking-wide">
+                🔎 Analyze Threat
+            </button>
+            <p id="loadingMessage" class="loading-indicator hidden mt-6 flex flex-col items-center justify-center text-indigo-600 font-medium">
+                <svg class="animate-spin h-8 w-8 text-indigo-400 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                Analyzing threat... Please wait.
+            </p>
+        </div>
+
+        <!-- Report Section -->
+        <div id="report-section" class="report-area bg-white/90 p-8 rounded-2xl border border-gray-200 mt-8 overflow-x-auto w-full shadow-lg hidden">
+            <div id="report-alert"></div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center">Analysis Report</h2>
+            <pre id="analysisReportContent" class="report-content whitespace-pre-wrap font-mono text-base text-gray-800"></pre>
+            <!-- Add below #analysisReportContent in the report section -->
+            <div id="mitigationSection" class="mt-6 hidden">
+                <h3 class="text-lg font-semibold text-blue-700 mb-2">Mitigation Suggestions</h3>
+                <ul id="mitigationList" class="list-disc list-inside text-gray-700"></ul>
+            </div>
+            <button onclick="resetApp()" class="button bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 mt-6 w-full text-lg">Analyze New Threat</button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="w-full mt-10 text-center text-gray-400 text-sm">
+            &copy; 2025 CyberGuard AI &mdash; <a href="#" class="text-indigo-400 hover:underline">Privacy Policy</a>
+        </footer>
+    </div>
+
+    <!-- History Button -->
+    <button onclick="showHistory()" class="mt-4 px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-sm transition">🕑 View Analysis History</button>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-800">Analysis History</h2>
+          <button onclick="closeHistory()" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
+        <div id="historyContent" class="max-h-[400px] overflow-y-auto"></div>
+      </div>
+    </div>
+
+    <!-- Floating chat button -->
+<button id="chatbotBtn" onclick="toggleChatbot()" class="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg w-16 h-16 flex items-center justify-center text-3xl z-50">
+    💬
+</button>
+<!-- Chatbot window -->
+<div id="chatbotWindow" class="fixed bottom-28 right-8 bg-white rounded-xl shadow-2xl w-80 max-w-full p-4 z-50 hidden">
+    <div class="flex justify-between items-center mb-2">
+        <span class="font-bold text-indigo-700">CyberGuard Assistant</span>
+        <button onclick="toggleChatbot()" class="text-gray-400 hover:text-gray-700 text-xl">&times;</button>
+    </div>
+    <div id="chatbotMessages" class="h-48 overflow-y-auto mb-2 text-sm"></div>
+    <div class="flex">
+        <input id="chatbotInput" type="text" class="flex-1 border rounded-l px-2 py-1 focus:outline-none" placeholder="Ask a security question..." onkeydown="if(event.key==='Enter'){sendChatbotMessage();}">
+        <button onclick="sendChatbotMessage()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 rounded-r">Send</button>
+    </div>
+</div>
+
+    <script>
+        async function analyzeThreat() {
+            const inputText = document.getElementById('threatInput').value;
+            if (!inputText.trim()) {
+                alert('Please paste some text to analyze.');
+                return;
+            }
+            document.getElementById('loadingMessage').classList.remove('hidden');
+            document.getElementById('input-section').classList.add('opacity-50', 'pointer-events-none');
+            document.getElementById('report-section').classList.add('hidden');
+            try {
+                const response = await fetch('/analyze_threat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: inputText })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('analysisReportContent').textContent = data.report;
+                    showReportAlert(data.report);
+                    // Show mitigation
+                    if (data.mitigation && data.mitigation.length > 0) {
+                        document.getElementById('mitigationList').innerHTML = data.mitigation.map(m => `<li>${m}</li>`).join('');
+                        document.getElementById('mitigationSection').classList.remove('hidden');
+                    } else {
+                        document.getElementById('mitigationSection').classList.add('hidden');
+                    }
+                    document.getElementById('report-section').classList.remove('hidden');
+                    document.getElementById('input-section').classList.add('hidden');
+                    setTimeout(() => {
+                        document.getElementById('report-section').scrollIntoView({ behavior: 'smooth' });
+                    }, 200);
+                } else {
+                    alert('Analysis failed: ' + (data.message || 'Unknown error'));
+                    console.error('Analysis error:', data.message);
+                    resetApp();
+                }
+            } catch (error) {
+                alert('An error occurred during analysis. Check console for details.');
+                console.error('Fetch error:', error);
+                resetApp();
+            } finally {
+                document.getElementById('loadingMessage').classList.add('hidden');
+                document.getElementById('input-section').classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        function showReportAlert(reportText) {
+            const alertDiv = document.getElementById('report-alert');
+            let isIssue = false;
+            let isNoIssue = false;
+            const lower = reportText.toLowerCase();
+            if (
+                lower.includes('no issue') ||
+                lower.includes('no threat') ||
+                lower.includes('benign') ||
+                lower.includes('safe') ||
+                lower.includes('not malicious')
+            ) {
+                isNoIssue = true;
+            } else if (
+                lower.includes('issue') ||
+                lower.includes('malicious') ||
+                lower.includes('phishing') ||
+                lower.includes('threat') ||
+                lower.includes('attack') ||
+                lower.includes('danger') ||
+                lower.includes('critical') ||
+                lower.includes('high')
+            ) {
+                isIssue = true;
+            }
+            if (isNoIssue) {
+                alertDiv.innerHTML = `<div class="mb-4 px-4 py-3 rounded-lg bg-green-100 border border-green-400 text-green-800 font-semibold text-center shadow">
+                    ✅ No threat detected. This input appears safe.
+                </div>`;
+            } else if (isIssue) {
+                alertDiv.innerHTML = `<div class="mb-4 px-4 py-3 rounded-lg bg-red-100 border border-red-400 text-red-800 font-semibold text-center shadow">
+                    ⚠️ Threat or issue detected! Please review the analysis below.
+                </div>`;
+            } else {
+                alertDiv.innerHTML = "";
+            }
+        }
+
+        function resetApp() {
+            document.getElementById('threatInput').value = '';
+            document.getElementById('input-section').classList.remove('opacity-50', 'pointer-events-none');
+            document.getElementById('report-section').classList.add('hidden');
+            document.getElementById('input-section').classList.remove('hidden');
+
+            // Smooth scroll back to the input section
+            setTimeout(() => {
+                document.getElementById('input-section').scrollIntoView({ behavior: 'smooth' });
+            }, 200);
+        }
+
+        async function showHistory() {
+            const modal = document.getElementById('historyModal');
+            const content = document.getElementById('historyContent');
+            content.innerHTML = '<span class="text-gray-400">Loading...</span>';
+            modal.classList.remove('hidden');
+            try {
+                const resp = await fetch('/history');
+                const data = await resp.json();
+                if (data.success && data.history.length > 0) {
+                    content.innerHTML = data.history.map(h =>
+                        `<div class="mb-4 p-4 bg-gray-50 rounded border">
+                            <div class="text-xs text-gray-500 mb-1">Input:</div>
+                            <div class="text-sm mb-2">${h.input}</div>
+                            <div class="text-xs text-gray-500 mb-1">Report:</div>
+                            <div class="text-sm mb-2">${h.report}</div>
+                            <div class="text-xs text-gray-500 mb-1">Mitigation:</div>
+                            <ul class="list-disc list-inside text-sm">${h.mitigation.map(m => `<li>${m}</li>`).join('')}</ul>
+                        </div>`
+                    ).join('');
+                } else {
+                    content.innerHTML = '<span class="text-gray-400">No history yet.</span>';
+                }
+            } catch {
+                content.innerHTML = '<span class="text-red-500">Failed to load history.</span>';
+            }
+        }
+
+        function closeHistory() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        // Chatbot functionality
+        function toggleChatbot() {
+            const win = document.getElementById('chatbotWindow');
+            win.classList.toggle('hidden');
+        }
+        async function sendChatbotMessage() {
+            const input = document.getElementById('chatbotInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            const messages = document.getElementById('chatbotMessages');
+            messages.innerHTML += `<div class="mb-1"><span class="font-semibold text-indigo-600">You:</span> ${msg}</div>`;
+            input.value = '';
+            messages.scrollTop = messages.scrollHeight;
+            try {
+                const resp = await fetch('/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    messages.innerHTML += `<div class="mb-2"><span class="font-semibold text-gray-700">Bot:</span> ${data.response}</div>`;
+                } else {
+                    messages.innerHTML += `<div class="mb-2 text-red-500">Bot: ${data.message}</div>`;
+                }
+            } catch {
+                messages.innerHTML += `<div class="mb-2 text-red-500">Bot: Failed to get response.</div>`;
+            }
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function insertSampleThreat() {
+    const sample = document.getElementById('sampleThreats').value;
+    if (sample) {
+        // Replace literal \n with real newlines
+        document.getElementById('threatInput').value = sample.replace(/\\n/g, '\n');
+    }
+}
+    </script>
+</body>
+</html>
